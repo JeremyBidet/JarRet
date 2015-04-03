@@ -1,6 +1,3 @@
-/**
- * 
- */
 package fr.upem.jarret;
 
 
@@ -9,5 +6,6 @@ package fr.upem.jarret;
  *
  */
 public class ServerJarRet {
+
 
 }
