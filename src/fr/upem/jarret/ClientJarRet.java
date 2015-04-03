@@ -1,14 +1,14 @@
 /**
  * 
  */
-package fr.upem;
+package fr.upem.jarret;
 
 
 /**
  * @author User
  *
  */
-public class UserJarRet {
+public class ClientJarRet {
 
 	/**
 	 * @param args
