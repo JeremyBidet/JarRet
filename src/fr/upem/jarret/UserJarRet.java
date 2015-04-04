@@ -1,9 +1,11 @@
 package fr.upem.jarret;
 
+// TODO class
 
 /**
- * @author User
- *
+ * 
+ * @author Jeremy
+ * @author Enzo
  */
 public class UserJarRet {
 
@@ -18,7 +20,6 @@ public class UserJarRet {
 	}
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 	}
 
 }
