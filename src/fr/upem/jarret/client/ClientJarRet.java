@@ -125,6 +125,7 @@ public class ClientJarRet {
 		// parse header response
 		ServerResponseHeader header = new ServerResponseHeader(s_header).valid();
 		// get content response
+		// TODO get the end header position and set bb position to it to get only json
 		bb.rewind();
 		String _content = Charset.forName(header.getCharset()).decode(bb).toString();
 		// parse content response
@@ -154,6 +155,7 @@ public class ClientJarRet {
 	private void computeTask(ServerResponseContent content) throws ClassNotFoundException, IllegalAccessException, InstantiationException, ComputeException, IOException {
 		/** getting job **/
 		// load the worker class name from worker url
+		// TODO save worker for optimization
 		Worker worker = WorkerFactory.getWorker(content.getWorkerUrl(), content.getWorkerClassname());
 		/** checking statements **/
 		// get the job with job id
@@ -168,11 +170,12 @@ public class ClientJarRet {
 		// compute the task
 		String result = worker.compute(content.getTask());
 		// check result format : { "Prime" : false, "Facteur" : 2 }
-		if( result.length() + 0 > MAX_BUFFER_SIZE) {
-			throw new ComputeException("Compute result is too long !", 1);
-		}
 		if( result == null ) {
 			throw new ComputeException("Compute failed !", 2);
+		}
+		// TODO replace 0 by header size
+		if( result.length() + response.length() > MAX_BUFFER_SIZE) {
+			throw new ComputeException("Compute result is too long !", 1);
 		}
 		JsonFactory f = new JsonFactory();
 		JsonParser p = null;
