@@ -125,7 +125,6 @@ public class ClientJarRet {
 		// parse header response
 		ServerResponseHeader header = new ServerResponseHeader(s_header).valid();
 		// get content response
-		bb.clear();
 		String _content = Charset.forName(header.getCharset()).decode(bb).toString();
 		// parse content response
 		ServerResponseContent content = new ServerResponseContent(_content);
