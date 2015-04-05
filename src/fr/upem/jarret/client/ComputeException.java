@@ -15,8 +15,8 @@ public class ComputeException extends Exception {
 	private static final long serialVersionUID = 1510634577771196575L;
 	public static final Map<Integer, String> error_messages = new HashMap<>();
 	static {
-		error_messages.put(-2, "");
-		error_messages.put(-1, "");
+		//error_messages.put(-2, "");
+		//error_messages.put(-1, "");
 		
 		error_messages.put(1, "Too Long");
 		error_messages.put(2, "Computation error");
