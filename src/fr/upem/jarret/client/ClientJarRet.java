@@ -19,6 +19,7 @@ import fr.upem.jarret.server.ServerResponseHeader;
 import fr.upem.jarret.worker.Worker;
 import fr.upem.jarret.worker.WorkerFactory;
 
+// FIXME inner operations are validated. Wait for the server to validate read and write operations.
 
 /**
  * Instanciate a servable client.<br>
