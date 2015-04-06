@@ -1,11 +1,12 @@
 package fr.upem.jarret.server;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.HashMap;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 /**
@@ -48,25 +49,27 @@ public class ServerResponseContent {
 	 * @throws IOException 
 	 * @throws JsonParseException 
 	 */
-	public ServerResponseContent(String content) throws ServerResponseException, JsonParseException, IOException {
-		JsonFactory f = new JsonFactory();
-		JsonParser p = null;
+	public ServerResponseContent(String content) throws ServerResponseException, IOException {
+		HashMap<String, Object> map = null;
 		try {
-			p = f.createParser(content);
+			map = new ObjectMapper().readValue(content, new TypeReference<HashMap<String, Object>>() {});
 		} catch(JsonParseException e) {
 			throw new ServerResponseException("Server response content format is not valid !");
+		} catch(JsonMappingException e) {
+			e.printStackTrace();
+		} catch(IOException e) {
+			e.printStackTrace();
 		}
-		Map<String, Object> map = p.readValueAsTree();
 		if( map.containsKey("ComeBackInSeconds") ) {
 			throw new ServerResponseException(
 					"Server has no task to compute for the moment !",
-					(long) map.get("ComeBackInSeconds"));
+					((Integer) map.get("ComeBackInSeconds")).longValue());
 		}
-		this.job_id           = (long)   map.get("JobId");
-		this.worker_version   = (String) map.get("WorkerVersion");
-		this.worker_url       = (String) map.get("WorkerURL");
-		this.worker_classname = (String) map.get("WorkerClassName");
-		this.task             = (int)    map.get("Task");
+		this.job_id           = Long.parseLong((String) map.get("JobId"));
+		this.worker_version   = (String)   map.get("WorkerVersion");
+		this.worker_url       = (String)   map.get("WorkerURL");
+		this.worker_classname = (String)   map.get("WorkerClassName");
+		this.task             = ((Integer) map.get("Task")).intValue();
 	}
 
 	/**

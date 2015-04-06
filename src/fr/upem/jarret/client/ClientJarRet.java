@@ -26,24 +26,27 @@ import fr.upem.jarret.worker.WorkerFactory;
  * If no error occurs, the client restart the process.<br>
  * If server does not have any task to compute, client sleep for a timeout given by the server
  * and request a new task.<br>
- * If there is a task to compute, but an error occurs while computing, the client send a response with
+ * If there is a task to compute, but an error occurs while computing, the client send a response to the server with
  * an error message to the server.<br>
  * If there is a task to compute and no error occurs while computing, but the result does not match
- * the required format, the client send a response with an error message to the server.<br>
+ * the required format, the client send a response to the server with an error message to the server.<br>
  * @author Enzo
  * @author Jeremy
  */
 public class ClientJarRet {
 	
 	private final Charset ASCII_CHARSET   = Charset.forName("ASCII");
-	private final Charset UTF8_CHARSET   = Charset.forName("UTF-8");
+	private final Charset UTF8_CHARSET    = Charset.forName("UTF-8");
 	private final int     MAX_BUFFER_SIZE = 4096;
 	
 	private final String            client_id;
 	private final InetSocketAddress server;
 	private final SocketChannel     sc;
 	
-	private StringBuilder response;
+	private StringBuilder         response_to_server;
+	private Worker                worker;
+	private ServerResponseHeader  server_response_header;
+	private ServerResponseContent server_response_content;
 	
 	public ClientJarRet(String client_id, String hostname, int port) throws IOException {
 		this.client_id = client_id;
@@ -63,7 +66,7 @@ public class ClientJarRet {
 	public ClientJarRet start() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
 		try {
 			this.sc.connect(server);
-			response = new StringBuilder();
+			this.response_to_server = new StringBuilder();
 			try {
 				requestJob();
 				getJob();
@@ -123,19 +126,18 @@ public class ClientJarRet {
 		bb.flip();
 		String s_header = ASCII_CHARSET.decode(bb).toString();
 		// parse header response
-		ServerResponseHeader header = new ServerResponseHeader(s_header).valid();
+		this.server_response_header = new ServerResponseHeader(s_header).valid();
 		// get content response
-		// TODO get the end header position and set bb position to it to get only json
-		bb.rewind();
-		String _content = Charset.forName(header.getCharset()).decode(bb).toString();
+		bb.position(this.server_response_header.getHeaderLength());
+		String _content = Charset.forName(this.server_response_header.getCharset()).decode(bb).toString();
 		// parse content response
-		ServerResponseContent content = new ServerResponseContent(_content);
+		this.server_response_content = new ServerResponseContent(_content);
 		
 		/** setting server response... **/
 		// init response (header + content) to send to server
-		initResponse(content);
+		initResponse();
 		// compute task job
-		computeTask(content);
+		computeTask();
 	}
 
 	/**
@@ -143,7 +145,7 @@ public class ClientJarRet {
 	 * check statements, compute the task, check the compute result and then
 	 * append the result to the response to send to the server.<br>
 	 * 
-	 * @param content an object holding worker and task informations
+	 * @param server_response_content an object holding worker and task informations
 	 * 
 	 * @throws ComputeException give error code and message when compute failed
 	 * @throws ClassNotFoundException
@@ -152,47 +154,51 @@ public class ClientJarRet {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unused")
-	private void computeTask(ServerResponseContent content) throws ClassNotFoundException, IllegalAccessException, InstantiationException, ComputeException, IOException {
+	private void computeTask() throws ClassNotFoundException, IllegalAccessException, InstantiationException, ComputeException, IOException {
 		/** getting job **/
-		// load the worker class name from worker url
-		// TODO save worker for optimization
-		Worker worker = WorkerFactory.getWorker(content.getWorkerUrl(), content.getWorkerClassname());
+		// check if worker has been already used, if not, reset him
+		if( this.worker.getJobId()                 != this.server_response_content.getJobID() ||
+			this.worker.getVersion()               != this.server_response_content.getWorkerVersion() ||
+			this.worker.getClass().getSimpleName() != this.server_response_content.getWorkerClassname() ) {
+			// load the worker class name from worker url
+			this.worker = WorkerFactory.getWorker(
+					this.server_response_content.getWorkerUrl(),
+					this.server_response_content.getWorkerClassname());
+		}
 		/** checking statements **/
 		// get the job with job id
-		if( worker.getJobId() != content.getJobID() ) {
+		if( this.worker.getJobId() != this.server_response_content.getJobID() ) {
 			throw new ComputeException("The job ID does not match with the server requested job ID !", -2);
 		}
 		// get the version number for this worker
-		if( worker.getVersion() != content.getWorkerVersion() ) {
+		if( this.worker.getVersion() != this.server_response_content.getWorkerVersion() ) {
 			throw new ComputeException("The worker version does not match with the server requested worker version !", -1);
 		}
 		/** performing task **/
 		// compute the task
-		String result = worker.compute(content.getTask());
+		String result = this.worker.compute(this.server_response_content.getTask());
 		// check result format : { "Prime" : false, "Facteur" : 2 }
 		if( result == null ) {
 			throw new ComputeException("Compute failed !", 2);
 		}
-		// TODO replace 0 by header size
-		if( result.length() + response.length() > MAX_BUFFER_SIZE) {
+		// 11 is for <\t"Answer": > field
+		if( this.response_to_server.length() + 11 + result.length() > MAX_BUFFER_SIZE) {
 			throw new ComputeException("Compute result is too long !", 1);
 		}
 		JsonFactory f = new JsonFactory();
-		JsonParser p = null;
+		JsonParser p = f.createParser(result);
 		try {
-			p = f.createParser(result);
+			p.nextToken();
 		} catch(JsonParseException e) {
 			throw new ComputeException("Compute result does not have a valid JSON format !", 3);
 		}
-		if( p != null ) {
-			while( p.hasCurrentToken() ) {
-				if( p.nextValue() == JsonToken.START_OBJECT ) {
-					throw new ComputeException("Compute result is nested !", 4);
-				}
+		while( p.hasCurrentToken() ) {
+			if( p.nextValue() == JsonToken.START_OBJECT ) {
+				throw new ComputeException("Compute result is nested !", 4);
 			}
 		}
 		/** setting response **/
-		response.append("\t\"Answer\": ").append(result).append('\n');
+		this.response_to_server.append("\t\"Answer\": ").append(result).append('\n');
 	}
 
 	/**
@@ -200,37 +206,38 @@ public class ClientJarRet {
 	 * @throws IOException
 	 */
 	private void post() throws IOException {
-		response.append('}');
+		this.response_to_server.append('}');
 		/** reset the content length field **/
-		int position = response.indexOf("Content-Length") + 16; // offset to value
+		int position = this.response_to_server.indexOf("Content-Length") + 16; // offset to value
 		String final_response = new StringBuilder()
-				.append(response.substring(0, position))
-				.append(response.substring(response.indexOf("{")).length())
-				.append(response.substring(position+1))
+				.append(this.response_to_server.substring(0, position))
+				.append(this.response_to_server.substring(this.response_to_server.lastIndexOf("\r\n")+2).length())
+				.append(this.response_to_server.substring(position+1))
 				.toString();
 		/** send response to server **/
+		// FIXME may send header first encoded in ASCII, then send response encoded in UTF-8
 		this.sc.write(UTF8_CHARSET.encode(final_response));
 	}
 	
 	/**
 	 * Initialize the header and the immutable content of the response.
-	 * @param content the statements of the response (header + content field)
+	 * @param server_response_content the statements of the response (header + content field)
 	 * @return
 	 */
-	private void initResponse(ServerResponseContent content) {
-		response.append(
+	private void initResponse() {
+		this.response_to_server.append(
 				"POST Answer HTTP/1.1\r\n"
-				+ "Host: " + server.getHostName() + "\r\n"
-				+ "Content-Type: " + "application/json" + "\r\n"
-				+ "Content-Length: " + 0 + "\r\n"
+				+ "Host: "           + server.getHostName() + "\r\n"
+				+ "Content-Type: "   + "application/json"   + "\r\n"
+				+ "Content-Length: " + 0                    + "\r\n"
 				+ "\r\n"
-				+ "{\n"
-    				+ "\t\"JobId\": \"" + content.getJobID() + "\",\n"
-    				+ "\t\"WorkerVersion\": \"" + content.getWorkerVersion() + "\",\n"
-    				+ "\t\"WorkerURL\": \"" + content.getWorkerUrl() + "\",\n"
-    				+ "\t\"WorkerClassName\": \"" + content.getWorkerClassname() + "\",\n"
-    				+ "\t\"Task\": " + content.getTask() + ",\n"
-    				+ "\t\"ClientId\": \"" + this.client_id + "\",\n");
+				+ "\n{\n"
+    				+ "\t\"JobId\": \""           + this.server_response_content.getJobID()           + "\",\n"
+    				+ "\t\"WorkerVersion\": \""   + this.server_response_content.getWorkerVersion()   + "\",\n"
+    				+ "\t\"WorkerURL\": \""       + this.server_response_content.getWorkerUrl()       + "\",\n"
+    				+ "\t\"WorkerClassName\": \"" + this.server_response_content.getWorkerClassname() + "\",\n"
+    				+ "\t\"Task\": "              + this.server_response_content.getTask()            + ",\n"
+    				+ "\t\"ClientId\": \""        + this.client_id                                    + "\",\n");
 	}
 
 	/**
@@ -238,20 +245,24 @@ public class ClientJarRet {
 	 * @param error_message the error message to append
 	 */
 	private void throwErrorMessage(String error_message) {
-		response.append("\t\"Error\": \"").append(error_message).append("\"\n");
+		this.response_to_server.append("\t\"Error\": \"").append(error_message).append("\"\n");
 	}
 	
 
+	public static void usage() {
+		System.err.println("Usage :\n\tClientID ServerHostname\n\n<!-- default port is 80 -->");
+	}
+	
 	public static void main(String[] args) {
-		if( args.length != 3) { 
-			// TODO method usage();
+		if( args.length != 2) { 
+			usage();
 			return;
 		}
 		
 		for(int i=0; i < 100; i++) {
 			new Thread(() -> {
 				try {
-					ClientJarRet client = new ClientJarRet(args[0], args[1], Integer.parseInt(args[2]));
+					ClientJarRet client = new ClientJarRet(args[0], args[1], 80);
 					client.start();
 				} catch( Exception e ) {
 					e.printStackTrace();

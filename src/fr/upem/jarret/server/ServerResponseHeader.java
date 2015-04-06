@@ -1,7 +1,9 @@
 package fr.upem.jarret.server;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,9 +23,12 @@ import java.util.regex.Pattern;
  */
 public class ServerResponseHeader {
 	
-	private final List<String>  HTTP_VERSIONS = Arrays.asList("1.0", "1.1", "1.2");
-	private final List<Integer> HTTP_CODE = Arrays.asList(200, 400);
-	private final List<String>  HTTP_CODE_MSG = Arrays.asList("OK", "BAD REQUEST");
+	private static final List<String>  HTTP_VERSIONS = Arrays.asList("1\\.0", "1\\.1", "1\\.2");
+	private static final Map<Integer, String> HTTP_CODE = new HashMap<>();
+	static {
+		HTTP_CODE.put(200, "OK");
+		HTTP_CODE.put(400, "BAD REQUEST");
+	}
 	
 	private final String http_version;
 	private final int    code;
@@ -31,6 +36,7 @@ public class ServerResponseHeader {
 	private final String content_type;
 	private final String charset;
 	private final int    content_length;
+	private final int    header_length;
 	
 	/**
 	 * Init the server response header.<br>
@@ -39,17 +45,19 @@ public class ServerResponseHeader {
 	 * @throws ServerResponseException 
 	 */
 	public ServerResponseHeader(String header) throws ServerResponseException {
-		Pattern p = Pattern.compile(regex());
-		Matcher m = p.matcher(header);
+		Matcher m = Pattern.compile(regex()).matcher(header);
 		if( ! m.matches() ) {
 			throw new ServerResponseException("Server response header format is not valid !");
 		}
-		this.http_version   = m.group("http_version");
-		this.code           = Integer.parseInt(m.group("code"));
-		this.code_msg       = m.group("code_msg");
-		this.content_type   = m.group("content_type");
+		this.http_version   = m.group("httpversion");
+		Matcher mc = Pattern.compile("(?<code>\\d+) (?<codemsg>.*)").matcher(m.group("code"));
+		mc.matches();
+		this.code           = Integer.parseInt(mc.group("code"));
+		this.code_msg       = mc.group("codemsg");
+		this.content_type   = m.group("contenttype");
 		this.charset        = m.group("charset");
-		this.content_length = Integer.parseInt(m.group("content_length"));
+		this.content_length = Integer.parseInt(m.group("contentlength"));
+		this.header_length  = m.end("end");
 	}	
 	
 	/**
@@ -61,19 +69,16 @@ public class ServerResponseHeader {
 	 */
 	public ServerResponseHeader valid() throws ServerResponseException {
 		StringBuilder exception_msg = new StringBuilder();
-		if( http_version != "1.1") {
+		if( ! http_version.equals("1.1") ) {
 			exception_msg.append("\tHTTP version not valid : " + http_version).append('\n');
 		}
-		if( code != 200 ) {
-			exception_msg.append("\tHTTP response code not valid : " + code).append('\n');
+		if( code != 200 || ! HTTP_CODE.get(200).equals("OK") ) {
+			exception_msg.append("\tHTTP ").append(code).append(" ").append(HTTP_CODE.get(code)).append('\n');
 		}
-		if( code_msg != "OK" ) {
-			exception_msg.append("\tHTTP response message code not valid : " + code_msg).append('\n');
-		}
-		if( content_type != "application/json" ) {
+		if( ! content_type.equals("application/json") ) {
 			exception_msg.append("\tHTTP response content type not valid : " + content_type).append('\n');
 		}
-		if( charset != "utf-8" ) {
+		if( ! charset.equals("utf-8") ) {
 			exception_msg.append("\tHTTP response content charset not valid : " + charset).append('\n');
 		}
 		
@@ -92,10 +97,10 @@ public class ServerResponseHeader {
     		\r\n
     		... <content> ...
 		**/
-		return	"HTTP/(?<http_version>HTTP/" + httpVersions() + ") (?<code>" + httpCode() + ") (?<code_s>" + httpCodeMSG() + ")\r\n"
-				+ "Content-type: (?<content_type>.+); charset=(?<charset>.+)\r\n"
-				+ "Content-length: (?<content_length>\\d+)\r\n" 
-				+ "\r\n"
+		return	"HTTP/(?<httpversion>" + httpVersions() + ") (?<code>" + httpCode() + ")\r\n"
+				+ "Content-type: (?<contenttype>.+); charset=(?<charset>.+)\r\n"
+				+ "Content-length: (?<contentlength>\\d+)\r\n" 
+				+ "(?<end>\r\n)"
 				+ ".*"; // content response could be not valid cause response charset may differs from decode charset
 	}
 	
@@ -108,23 +113,13 @@ public class ServerResponseHeader {
 	}
 	
 	private String httpCode() {
-		StringBuilder codes = HTTP_CODE.stream()
-				.map(s -> new StringBuilder().append(s).append('|'))
-				.reduce((s1, s2) -> s1.append(s2))
-				.get();
+		StringBuilder codes = new StringBuilder();
+		HTTP_CODE.forEach((k,v) -> codes.append("(").append(k).append(" ").append(v).append(")|"));
 		return codes.deleteCharAt(codes.length()-1).toString();
 	}
 	
-	private String httpCodeMSG() {
-		StringBuilder codes_msg = HTTP_CODE_MSG.stream()
-				.map(s -> new StringBuilder().append(s).append('|'))
-				.reduce((s1, s2) -> s1.append(s2))
-				.get();
-		return codes_msg.deleteCharAt(codes_msg.length()-1).toString();
-	}
-	
 	/**
-	 * @return the http_version
+	 * @return the http version
 	 */
 	public String getHTTPVersion() {
 		return this.http_version;
@@ -163,6 +158,13 @@ public class ServerResponseHeader {
 	 */
 	public int getContentLength() {
 		return this.content_length;
+	}
+	
+	/**
+	 * @return the header length, offset from start to last "\r\n" char sequence
+	 */
+	public int getHeaderLength() {
+		return this.header_length;
 	}
 	
 }
