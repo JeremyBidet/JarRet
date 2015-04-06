@@ -1,4 +1,4 @@
-package fr.upem.client;
+package fr.upem.jarret.client;
 
 
 import static org.junit.Assert.assertEquals;
