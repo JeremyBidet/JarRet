@@ -154,7 +154,6 @@ public class ClientJarRet {
 	 * @throws InstantiationException
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unused")
 	private void computeTask() throws ClassNotFoundException, IllegalAccessException, InstantiationException, ComputeException, IOException {
 		/** getting job **/
 		// check if worker has been already used, if not, reset him
