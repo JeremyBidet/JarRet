@@ -9,9 +9,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import fr.upem.jarret.server.ServerResponseContent;
-import fr.upem.jarret.server.ServerResponseException;
-import fr.upem.jarret.server.ServerResponseException.ServerResponseThrowable;
+import fr.upem.jarret.client.ServerResponseContent;
+import fr.upem.jarret.client.ServerResponseException;
+import fr.upem.jarret.client.ServerResponseException.ServerResponseThrowable;
 
 
 /**

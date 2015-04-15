@@ -1,4 +1,4 @@
-package fr.upem.jarret.server;
+package fr.upem.jarret.client;
 
 
 /**

@@ -12,10 +12,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
-import fr.upem.jarret.server.ServerResponseContent;
-import fr.upem.jarret.server.ServerResponseException;
-import fr.upem.jarret.server.ServerResponseException.ServerResponseThrowable;
-import fr.upem.jarret.server.ServerResponseHeader;
+import fr.upem.jarret.client.ServerResponseException.ServerResponseThrowable;
 import fr.upem.jarret.worker.Worker;
 import fr.upem.jarret.worker.WorkerFactory;
 
@@ -157,9 +154,9 @@ public class ClientJarRet {
 	private void computeTask() throws ClassNotFoundException, IllegalAccessException, InstantiationException, ComputeException, IOException {
 		/** getting job **/
 		// check if worker has been already used, if not, reset him
-		if( this.worker.getJobId()                 != this.server_response_content.getJobID() ||
-			this.worker.getVersion()               != this.server_response_content.getWorkerVersion() ||
-			this.worker.getClass().getSimpleName() != this.server_response_content.getWorkerClassname() ) {
+		if( this.worker.getJobId()           != this.server_response_content.getJobID() ||
+			this.worker.getVersion()         != this.server_response_content.getWorkerVersion() ||
+			this.worker.getClass().getName() != this.server_response_content.getWorkerClassname() ) {
 			// load the worker class name from worker url
 			this.worker = WorkerFactory.getWorker(
 					this.server_response_content.getWorkerUrl(),

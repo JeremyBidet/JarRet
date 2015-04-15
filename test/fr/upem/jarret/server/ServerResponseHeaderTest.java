@@ -12,8 +12,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import fr.upem.jarret.server.ServerResponseException;
-import fr.upem.jarret.server.ServerResponseHeader;
+import fr.upem.jarret.client.ServerResponseException;
+import fr.upem.jarret.client.ServerResponseHeader;
 
 
 /**
