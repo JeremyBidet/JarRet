@@ -75,7 +75,7 @@ public class ServerInformation {
 	public ServerInformation() {
 		this.server_state     = ServerState.RUNNING;
 		this.number_of_client = 0;
-		this.jobs_state        = new HashMap<>();
+		this.jobs_state       = new HashMap<>();
 	}
 
 	

@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import fr.upem.jarret.server.ServerInformation.ServerState;
 import fr.upem.jarret.worker.Job;
 
 // TODO ServerJarRet class : finish
@@ -107,7 +108,7 @@ public class ServerJarRet {
 	 * 
 	 * @return a copy of the map sorted by job priority
 	 */
-	public Map<Long, Job> getJobsSortedByValue() {
+	public Map<Long, Job> getJobsSortedByPriority() {
 		Map<Long, Job> result = new LinkedHashMap<>();
 		this.jobs.entrySet().stream()
 			.sorted((j1, j2) -> { return j1.getValue().compareTo(j2.getValue()); })
@@ -129,7 +130,7 @@ public class ServerJarRet {
 		 * - ExecutorService::submit(Runnable task, T result)
 		 * - ExecutorService::submit(Runnable task)
 		 * - ExecutorService::invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-		 * As this list is sorted by job priority, we can use the peek (or poll, to remove) method
+		 * As this list is sorted by job priority, we can use the peek (or poll to remove) method
 		 * to get the head (highest priority job) and submit it to the thread pool.
 		 * Then a future of the result is returned. A future is a time wrapper for object.
 		 * A call to get() will block the thread until result is available.
@@ -150,6 +151,7 @@ public class ServerJarRet {
 		// TODO stop accepting client connection
 		this.thread_pool.shutdown();
 		this.thread_pool.awaitTermination(this.configuration.SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
+		this.informations.setServerState(ServerState.STOPPED);
 	}
 	
 	/**
@@ -161,6 +163,7 @@ public class ServerJarRet {
 		this.thread_pool.shutdownNow();
 		this.thread_pool.awaitTermination(this.configuration.SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
 		//this.bb.clear();
+		this.informations.setServerState(ServerState.CLOSED);
 	}
 	
 	
