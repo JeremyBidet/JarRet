@@ -18,8 +18,7 @@ public class CommandFactory {
 			try {
 				server.shutdown();
 			} catch( Exception e ) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.err.println("An exception has occur while shutdowning the server !");
 			}
 			server.getInformations().setServerState(ServerState.STOPPED);
 			return server.getInformations();
@@ -29,7 +28,7 @@ public class CommandFactory {
 			try {
 				server.close();
 			} catch( Exception e ) {
-				// TODO Auto-generated catch block
+				System.err.println("An exception has occured while closing the server !");
 				e.printStackTrace();
 			}
 			server.getInformations().setServerState(ServerState.CLOSED);

@@ -1,0 +1,11 @@
+{
+    "LocalPort"         :   80,
+    "AnswerPath"        :   "",
+    "LogPath"           :   "",
+    "MaxAnswerSize"     :   4096,
+    "MaxThread"         :   16,
+    "ConnectTimeout"    :   1000,
+    "AcceptTimeout"     :   400,
+    "ComputeTimeout"    :   5000,
+    "ShutdownTimeout"   :   10000
+}

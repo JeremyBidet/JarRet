@@ -3,7 +3,6 @@ package fr.upem.jarret.server;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -14,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 
 import fr.upem.jarret.worker.Job;
 
-// TODO class
+// TODO ServerJarRet class : finish
 
 /**
- * This is
+ * This is it!
  * 
  * @author Enzo
  * @author Jeremy
@@ -28,32 +27,27 @@ public class ServerJarRet {
 	private final ServerInformation    informations;
 	private final Map<String, Command> commands;
 	
-	private final int                  MAX_THREAD_POOL_SIZE = 16;
-	private final long                 SHUTDOWN_TIMEOUT = 3000L;
 	private final ExecutorService      thread_pool;
 	private final Map<Long, Job>       jobs;
 	
 	private       ServerSocketChannel  ssc;
 	
-	private final int                  MAX_ANSWER_SIZE = 4096;
 	private final ByteBuffer           bb;
 	
 	
 	public ServerJarRet() throws IOException {
-		this.configuration = new ServerConfiguration();
+		this.configuration = new ServerConfiguration("config/JarRetConfig.json");
 		this.informations = new ServerInformation();
 		this.commands = CommandFactory.create();
 		
-		this.thread_pool = Executors.newFixedThreadPool(MAX_THREAD_POOL_SIZE);
-		this.jobs = new TreeMap<Long, Job>(Comparator
-				.comparingInt(j1 -> this.jobs.get(j1).getPriority())
-				.reversed());
+		this.thread_pool = Executors.newFixedThreadPool(this.configuration.MAX_THREAD_POOL_SIZE);
+		this.jobs = new TreeMap<Long, Job>();
 		
 		this.ssc = ServerSocketChannel.open();
 		this.ssc.configureBlocking(false);
-		this.ssc.bind(null);
+		this.ssc.bind(this.configuration.LOCAL_PORT);
 		
-		this.bb = ByteBuffer.allocateDirect(MAX_ANSWER_SIZE);	
+		this.bb = ByteBuffer.allocateDirect(this.configuration.MAX_ANSWER_SIZE);	
 	}
 	
 	
@@ -103,7 +97,7 @@ public class ServerJarRet {
 	 * Parse new incoming jobs as JSON files and add them, if job ID does not already exist.
 	 */
 	public void updateJobs() {
-		// TODO
+		// TODO get job from file, http request, etc... and pass it to Job constructor
 		Job j = new Job("");
 		if( !this.jobs.containsKey(j.getID()) )
 			this.jobs.put(j.getID(), j);
@@ -155,7 +149,7 @@ public class ServerJarRet {
 	public void shutdown() throws InterruptedException {
 		// TODO stop accepting client connection
 		this.thread_pool.shutdown();
-		this.thread_pool.awaitTermination(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
+		this.thread_pool.awaitTermination(this.configuration.SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 	
 	/**
@@ -165,8 +159,8 @@ public class ServerJarRet {
 	public void close() throws InterruptedException {
 		// TODO stop server, close connection
 		this.thread_pool.shutdownNow();
-		this.thread_pool.awaitTermination(SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
-		this.bb.clear();
+		this.thread_pool.awaitTermination(this.configuration.SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
+		//this.bb.clear();
 	}
 	
 	

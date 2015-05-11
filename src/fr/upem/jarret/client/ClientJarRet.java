@@ -223,18 +223,18 @@ public class ClientJarRet {
 	 */
 	private void initResponse() {
 		this.response_to_server.append(
-				"POST Answer HTTP/1.1\r\n"
-				+ "Host: "           + server.getHostName() + "\r\n"
-				+ "Content-Type: "   + "application/json"   + "\r\n"
-				+ "Content-Length: " + 0                    + "\r\n"
-				+ "\r\n"
-				+ "\n{\n"
-    				+ "\t\"JobId\": \""           + this.server_response_content.getJobID()           + "\",\n"
-    				+ "\t\"WorkerVersion\": \""   + this.server_response_content.getWorkerVersion()   + "\",\n"
-    				+ "\t\"WorkerURL\": \""       + this.server_response_content.getWorkerUrl()       + "\",\n"
-    				+ "\t\"WorkerClassName\": \"" + this.server_response_content.getWorkerClassname() + "\",\n"
-    				+ "\t\"Task\": "              + this.server_response_content.getTask()            + ",\n"
-    				+ "\t\"ClientId\": \""        + this.client_id                                    + "\",\n");
+				"POST Answer HTTP/1.1\r\n")
+				.append("Host: ")          .append(server.getHostName()).append("\r\n")
+				.append("Content-Type: ")  .append("application/json")  .append("\r\n")
+				.append("Content-Length: ").append(0)                   .append("\r\n")
+				.append("\r\n")
+				.append("\n{\n")
+					.append("\t\"JobId\": \"")          .append(this.server_response_content.getJobID()           ).append("\",\n")
+					.append("\t\"WorkerVersion\": \"")  .append(this.server_response_content.getWorkerVersion()   ).append("\",\n")
+					.append("\t\"WorkerURL\": \"")      .append(this.server_response_content.getWorkerUrl()       ).append("\",\n")
+					.append("\t\"WorkerClassName\": \"").append(this.server_response_content.getWorkerClassname() ).append("\",\n")
+					.append("\t\"Task\": ")             .append(this.server_response_content.getTask()            ).append(",\n")
+					.append("\t\"ClientId\": \"")       .append(this.client_id                                    ).append("\",\n");
 	}
 
 	/**
@@ -256,10 +256,11 @@ public class ClientJarRet {
 			return;
 		}
 		
-		for(int i=0; i < 100; i++) {
+		for(int i=0; i < 1; i++) {
+			final int j = i;
 			new Thread(() -> {
 				try {
-					ClientJarRet client = new ClientJarRet(args[0], args[1], 80);
+					ClientJarRet client = new ClientJarRet(args[0]+j, args[1], 80);
 					client.start();
 				} catch( Exception e ) {
 					e.printStackTrace();

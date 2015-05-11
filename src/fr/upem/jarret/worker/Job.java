@@ -14,8 +14,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class Job implements Comparable<Job>{
 	
+	private final String json_string;
+	
 	private final long   id;
-	private final long   task_number;
+	private final long   number_of_task;
 	private final String description;
 	private final int    priority;
 	private final String worker_version_number;
@@ -39,6 +41,7 @@ public class Job implements Comparable<Job>{
 	 * @param job_as_json the JSON string
 	 */
 	public Job(String job_as_json) {
+		this.json_string = job_as_json;
 		HashMap<String, Object> map = null;
 		try {
 			map = new ObjectMapper().readValue(job_as_json, new TypeReference<HashMap<String, Object>>() {});
@@ -51,7 +54,7 @@ public class Job implements Comparable<Job>{
 		}
 		
 		this.id                    = Long.parseLong((String) map.get("JobId"));
-		this.task_number           = Long.parseLong((String) map.get("JobTaskNumber"));
+		this.number_of_task        = Long.parseLong((String) map.get("JobTaskNumber"));
 		this.description           = (String) map.get("JobDescription");
 		this.priority              = Integer.parseInt((String) map.get("JobPriority"));
 		this.worker_version_number = (String) map.get("WorkerVersionNumber");
@@ -71,7 +74,7 @@ public class Job implements Comparable<Job>{
 	 * @return the number of job tasks
 	 */
 	public long getTaskNumber() {
-		return this.task_number;
+		return this.number_of_task;
 	}
 
 	/**
@@ -115,8 +118,7 @@ public class Job implements Comparable<Job>{
 	}
 	
 	public String toJSONString() {
-		// TODO
-		return "";
+		return json_string;
 	}
 	
 	@Override
