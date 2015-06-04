@@ -67,7 +67,7 @@ start->end
 
 
 ### <i class="icon-shield"></i> *Copyright And Licensing Information*
-MIT &copy; WhyT
+MIT &copy; [WhyT](https://github.com/WhyTSwag)
 
 
 ----------
