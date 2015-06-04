@@ -67,7 +67,7 @@ start->end
 
 
 ### <i class="icon-shield"></i> *Copyright And Licensing Information*
-&copy; Copyright WhyT
+MIT &copy; WhyT
 
 
 ----------
