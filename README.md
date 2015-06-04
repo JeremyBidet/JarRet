@@ -25,7 +25,7 @@
 ### <i class="icon-terminal"></i> *Operating Instructions*
 
 ### <i class="icon-road"></i> *Workflow*
-![Workflow](workflow.svg)
+![Workflow](Workflow.png)
 ```flow
 start=>start: Start
 end=>end: End
