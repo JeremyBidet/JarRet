@@ -5,7 +5,7 @@ import java.net.MalformedURLException;
 import fr.upem.jarret.worker.Worker;
 import fr.upem.jarret.worker.WorkerFactory;
 
-
+// TODO class
 
 /**
  * 

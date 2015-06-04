@@ -1,12 +1,8 @@
 package fr.upem.jarret.server;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -15,12 +11,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-
-
-
 import fr.upem.jarret.server.ServerInformation.ServerState;
 import fr.upem.jarret.worker.Job;
 
+// TODO ServerJarRet class : finish
 
 /**
  * This is it!
@@ -39,7 +33,7 @@ public class ServerJarRet {
 	
 	private       ServerSocketChannel  ssc;
 	
-
+	private final ByteBuffer           bb;
 	
 	
 	public ServerJarRet() throws IOException {
@@ -54,7 +48,7 @@ public class ServerJarRet {
 		this.ssc.configureBlocking(false);
 		this.ssc.bind(this.configuration.LOCAL_PORT);
 		
-		
+		this.bb = ByteBuffer.allocateDirect(this.configuration.MAX_ANSWER_SIZE);	
 	}
 	
 	
@@ -124,11 +118,10 @@ public class ServerJarRet {
 	
 	
 	/**
-	 * @throws IOException 
 	 * 
 	 */
-	public void start() throws IOException {
-	
+	public void start() {
+		// TODO server start
 		/* Server has a list of jobs to complete (sorted by job priority).
 		 * These job implements Callable<T>, where T is the type of the result, or a simple Runnable task.
 		 * Callable<T> is equivalent to give a Runnable task and a T result.
@@ -148,47 +141,14 @@ public class ServerJarRet {
 		 * - Interrupted... when thread is interrupted
 		 * - Timeout... when timeout is reached
 		 */
-		while(informations.getServerState() != ServerState.CLOSED ){
-
-			this.thread_pool.execute(()->{
-				ByteBuffer bb = ByteBuffer.allocate(this.configuration.MAX_ANSWER_SIZE);
-				SocketChannel client = null;
-				try {
-					client = ssc.accept();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				try {
-					while( bb.hasRemaining() && client.read(bb) != -1 );
-					bb.flip();
-					String s_header = Charset.forName("ASCII").decode(bb).toString();
-					if(s_header.contains("GET")){
-						bb.clear();
-						//we have to send the job
-					}
-					else if(s_header.contains("POST")){
-						File file = new File("result.log");
-						Charset charset = Charset.forName("UTF-8");
-						//write the result in the file
-					}
-					} catch (Exception e) {
-					
-					e.printStackTrace();
-				}
-			});
-			
-		}
 	}
-	
-	
-	
-
 
 	/**
 	 * @throws InterruptedException 
 	 * 
 	 */
 	public void shutdown() throws InterruptedException {
+		// TODO stop accepting client connection
 		this.thread_pool.shutdown();
 		this.thread_pool.awaitTermination(this.configuration.SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
 		this.informations.setServerState(ServerState.STOPPED);
@@ -196,21 +156,19 @@ public class ServerJarRet {
 	
 	/**
 	 * @throws InterruptedException 
-	 * @throws IOException 
 	 * 
 	 */
-	public void close() throws InterruptedException, IOException {
+	public void close() throws InterruptedException {
+		// TODO stop server, close connection
 		this.thread_pool.shutdownNow();
 		this.thread_pool.awaitTermination(this.configuration.SHUTDOWN_TIMEOUT, TimeUnit.MILLISECONDS);
-		ssc.close();
+		//this.bb.clear();
 		this.informations.setServerState(ServerState.CLOSED);
-		
 	}
 	
 	
-	public static void main(String[] args) throws IOException {
-		ServerJarRet sj = new ServerJarRet();
-		sj.start();
+	public static void main(String[] args) {
+		// TODO server main
 	}
 
 }
