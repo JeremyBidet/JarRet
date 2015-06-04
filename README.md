@@ -25,7 +25,7 @@
 ### <i class="icon-terminal"></i> *Operating Instructions*
 
 ### <i class="icon-road"></i> *Workflow*
-![Workflow](Workflow.png)
+![Workflow](doc/resources/Workflow.png)
 <!--
 ```flow
 start=>start: Start
