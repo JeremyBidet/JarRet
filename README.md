@@ -15,7 +15,6 @@
 ***M1 IT Network Project***
 ----------------------------------------
 
-----------
 
 ### <i class="icon-help-circled"></i> *What is it?*
 
