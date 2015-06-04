@@ -26,12 +26,14 @@
 
 ### <i class="icon-road"></i> *Workflow*
 ![Workflow](Workflow.png)
+<!--
 ```flow
 start=>start: Start
 end=>end: End
 
 start->end
 ```
+-->
 
 ### <i class="icon-file"></i> *File Manifest*
 > *Note:* Considers to open this file with [StackEdit.io](https://stackedit.io)
